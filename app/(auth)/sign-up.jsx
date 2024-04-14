@@ -4,18 +4,38 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
 
 import { images } from "../../constants";
-
+import { createUser } from "../../lib/appwrite";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const SignUp = () => {
+  const { setUser, setIsLogin } = useGlobalContext();
+  const [isSubmitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     username: "",
     email: "",
     password: "",
   });
 
-  const submit = async () => {};
+  const submit = async () => {
+    if (!form.username || !form.email || !form.password) {
+      Alert.alert("Error", "Please fill in all fields");
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await createUser(form.email, form.password, form.username);
+      setUser(result);
+      setIsLogin(true);
+
+      router.replace("/home");
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView className="bg-primary h-full">
@@ -53,7 +73,12 @@ const SignUp = () => {
             otherStyles="mt-7"
           />
 
-          <CustomButton title="Sign Up" handlePress={submit} containerStyles="mt-7" />
+          <CustomButton
+            title="Sign Up"
+            handlePress={submit}
+            containerStyles="mt-7"
+            isLoading={isSubmitting}
+          />
 
           <View className="flex justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">Have an account already?</Text>
